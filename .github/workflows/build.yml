@@ -54,6 +54,9 @@ jobs:
     name: Create and upload builds
     needs: [ make_release, get_version ]
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch: [ x86_64-unknown-linux-musl, i686-unknown-linux-musl, armv7-unknown-linux-musleabihf, arm-unknown-linux-musleabi, aarch64-unknown-linux-musl ]
   
     defaults:
       run:
@@ -66,55 +69,12 @@ jobs:
           sudo apt update && sudo apt install upx
           cargo install cross
           mkdir -p bin
-      - name: x86-64
+      - name: Build binaries
         run: |
           tag_name="${{ needs.get_version.outputs.project_version }}"
-          target="x86_64-unknown-linux-musl"
-          cross build --release --target $target
-          upx target/$target/release/diswall
-          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-      - name: i686
-        run: |
-          tag_name="${{ needs.get_version.outputs.project_version }}"
-          target="i686-unknown-linux-musl"
-          cross build --release --target $target
-          upx target/$target/release/diswall
-          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-#      - name: mipsel
-#        run: |
-#          tag_name="${{ needs.get_version.outputs.project_version }}"
-#          target="mipsel-unknown-linux-musl"
-#          cross build --release --target $target
-#          upx target/$target/release/diswall
-#          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-#      - name: mips
-#        run: |
-#          tag_name="${{ needs.get_version.outputs.project_version }}"
-#          target="mips-unknown-linux-musl"
-#          cross build --release --target $target
-#          upx target/$target/release/diswall
-#          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-      - name: armv7
-        run: |
-          tag_name="${{ needs.get_version.outputs.project_version }}"
-          target="armv7-unknown-linux-musleabihf"
-          cross build --release --target $target
-          upx target/$target/release/diswall
-          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-      - name: arm
-        run: |
-          tag_name="${{ needs.get_version.outputs.project_version }}"
-          target="arm-unknown-linux-musleabi"
-          cross build --release --target $target
-          upx target/$target/release/diswall
-          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
-      - name: aarch64
-        run: |
-          tag_name="${{ needs.get_version.outputs.project_version }}"
-          target="aarch64-unknown-linux-musl"
-          cross build --release --target $target
-          upx target/$target/release/diswall
-          cp target/$target/release/diswall ./bin/diswall-v$tag_name-$target
+          cross build --release --target ${{ matrix.arch }}
+          upx target/${{ matrix.arch }}/release/diswall
+          cp target/${{ matrix.arch }}/release/diswall ./bin/diswall-v$tag_name-${{ matrix.arch }}
 
       - name: Upload binaries
         env:
